@@ -5,18 +5,19 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.ui.theme.MyApplicationTheme
 
 class ActivityC : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -45,7 +46,11 @@ fun ActivityCScreen(onFinishClicked: () -> Unit) {
         ) {
             Text("Activity C", style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(32.dp))
-            Button(onClick = onFinishClicked) {
+            // Use ButtonDefaults.buttonColors to set the button color to brown
+            Button(
+                onClick = onFinishClicked,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF795548))
+            ) {
                 Text("Finish C")
             }
         }
@@ -56,6 +61,7 @@ fun ActivityCScreen(onFinishClicked: () -> Unit) {
 @Composable
 fun ActivityCPreview() {
     MyApplicationTheme {
+
         ActivityCScreen {}
     }
 }

@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.ui.theme.MyApplicationTheme
@@ -21,17 +22,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MyApplicationTheme {
-                MainContent(onRestartCounter) {
-                    when (it) {
-                        "ActivityB" -> {
-                            startActivity(Intent(this, ActivityB::class.java))
-                        }
-                        "ActivityC" -> {
-                            startActivity(Intent(this, ActivityC::class.java))
-                        }
-                        "CloseApp" -> {
-                            finishAffinity() // Close the app
-                        }
+                MainContent(onRestartCounter) { action ->
+                    when (action) {
+                        "ActivityB" -> startActivity(Intent(this, ActivityB::class.java))
+                        "ActivityC" -> startActivity(Intent(this, ActivityC::class.java))
+                        "CloseApp" -> finishAffinity() // Close the app
                     }
                 }
             }
@@ -46,7 +41,9 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainContent(threadCounter: Int, navigate: (String) -> Unit) {
+fun MainContent(threadCounter: Int, onAction: (String) -> Unit) {
+    var showDialog by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -57,22 +54,41 @@ fun MainContent(threadCounter: Int, navigate: (String) -> Unit) {
         Text("Activity A", style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(onClick = { navigate("ActivityB") }) {
-            Text("Go to Activity B")
-        }
+        CustomButton("Go to Activity B") { onAction("ActivityB") }
         Spacer(modifier = Modifier.height(8.dp))
 
-        Button(onClick = { navigate("ActivityC") }) {
-            Text("Go to Activity C")
-        }
+        CustomButton("Go to Activity C") { onAction("ActivityC") }
         Spacer(modifier = Modifier.height(8.dp))
 
-        Button(onClick = { navigate("CloseApp") }) {
-            Text("Close App")
+        CustomButton("Show Dialog") { showDialog = true }
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                confirmButton = {
+                    TextButton(onClick = { showDialog = false }) {
+                        Text("Close")
+                    }
+                },
+                title = { Text("Simple Dialog") },
+                text = { Text("This is a simple dialog.") }
+            )
         }
         Spacer(modifier = Modifier.height(24.dp))
 
+        CustomButton("Close App") { onAction("CloseApp") }
+        Spacer(modifier = Modifier.height(24.dp))
+
         Text("Thread Counter: ${"%04d".format(threadCounter)}")
+    }
+}
+
+@Composable
+fun CustomButton(text: String, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF795548))
+    ) {
+        Text(text)
     }
 }
 

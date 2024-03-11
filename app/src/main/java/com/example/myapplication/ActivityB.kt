@@ -22,8 +22,7 @@ class ActivityB : ComponentActivity() {
         setContent {
             MyApplicationTheme {
                 ActivityBScreen {
-                    // Inform MainActivity that ActivityB is finishing
-                    setResult(RESULT_OK)
+                    PreferencesManager.setCounterIncrement(this, 5)
                     finish()
                 }
             }

@@ -1,11 +1,10 @@
 package com.example.myapplication
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,106 +17,62 @@ import com.example.myapplication.ui.theme.MyApplicationTheme
 class MainActivity : ComponentActivity() {
     private var onRestartCounter by mutableStateOf(0)
 
-    private lateinit var startActivityBResultLauncher: ActivityResultLauncher<Intent>
-    private lateinit var startActivityCResultLauncher: ActivityResultLauncher<Intent>
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Initialize the launcher for ActivityB
-        startActivityBResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                onRestartCounter += 5
-            }
-        }
-
-        // Initialize the launcher for ActivityC
-        startActivityCResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                onRestartCounter += 10
-            }
-        }
-
         setContent {
             MyApplicationTheme {
-                MainContent(threadCounter = onRestartCounter,
-                    onNavigateToActivityB = {
-                        startActivityBResultLauncher.launch(Intent(this@MainActivity, ActivityB::class.java))
-                    },
-                    onNavigateToActivityC = {
-                        startActivityCResultLauncher.launch(Intent(this@MainActivity, ActivityC::class.java))
-                    },
-                    onCloseApp = {
-                        finishAffinity() // Close the app
-                    })
+                MainContent(onRestartCounter) {
+                    when (it) {
+                        "ActivityB" -> {
+                            startActivity(Intent(this, ActivityB::class.java))
+                        }
+                        "ActivityC" -> {
+                            startActivity(Intent(this, ActivityC::class.java))
+                        }
+                        "CloseApp" -> {
+                            finishAffinity() // Close the app
+                        }
+                    }
+                }
             }
         }
     }
 
     override fun onRestart() {
         super.onRestart()
+        val increment = PreferencesManager.getAndClearCounterIncrement(this)
+        onRestartCounter += increment
     }
 }
 
 @Composable
-fun MainContent(threadCounter: Int, onNavigateToActivityB: () -> Unit, onNavigateToActivityC: () -> Unit, onCloseApp: () -> Unit) {
-    var showDialog by remember { mutableStateOf(false) }
-
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+fun MainContent(threadCounter: Int, navigate: (String) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(32.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Activity A", style = MaterialTheme.typography.headlineMedium)
-            Spacer(modifier = Modifier.height(16.dp))
+        Text("Activity A", style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(16.dp))
 
-            Button(onClick = onNavigateToActivityB) {
-                Text("Go to Activity B")
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Button(onClick = onNavigateToActivityC) {
-                Text("Go to Activity C")
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Button(onClick = { showDialog = true }) {
-                Text("Show Dialog")
-            }
-
-            if (showDialog) {
-                AlertDialog(
-                    onDismissRequest = { showDialog = false },
-                    confirmButton = {
-                        TextButton(onClick = { showDialog = false }) {
-                            Text("Close")
-                        }
-                    },
-                    title = { Text("Simple Dialog") },
-                    text = {
-                        Text("This is a simple dialog.")
-                    }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text("Thread Counter: ${"%04d".format(threadCounter)}")
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(onClick = onCloseApp) {
-                Text("Close App")
-            }
+        Button(onClick = { navigate("ActivityB") }) {
+            Text("Go to Activity B")
         }
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(onClick = { navigate("ActivityC") }) {
+            Text("Go to Activity C")
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(onClick = { navigate("CloseApp") }) {
+            Text("Close App")
+        }
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text("Thread Counter: ${"%04d".format(threadCounter)}")
     }
 }
 
@@ -125,6 +80,23 @@ fun MainContent(threadCounter: Int, onNavigateToActivityB: () -> Unit, onNavigat
 @Composable
 fun DefaultPreview() {
     MyApplicationTheme {
-        MainContent(threadCounter = 1, onNavigateToActivityB = {}, onNavigateToActivityC = {}, onCloseApp = {})
+        MainContent(threadCounter = 1) {}
+    }
+}
+
+object PreferencesManager {
+    private const val PREFS_NAME = "activity_counter_prefs"
+    private const val COUNTER_INCREMENT_KEY = "counter_increment"
+
+    fun setCounterIncrement(context: Context, increment: Int) {
+        val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        sharedPreferences.edit().putInt(COUNTER_INCREMENT_KEY, increment).apply()
+    }
+
+    fun getAndClearCounterIncrement(context: Context): Int {
+        val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val increment = sharedPreferences.getInt(COUNTER_INCREMENT_KEY, 0)
+        sharedPreferences.edit().remove(COUNTER_INCREMENT_KEY).apply()
+        return increment
     }
 }

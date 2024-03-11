@@ -48,7 +48,7 @@ fun ActivityBScreen(onFinishClicked: () -> Unit) {
         ) {
             Text("Activity B", style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(32.dp))
-            // Use ButtonDefaults.buttonColors to set the button color to brown
+            
             Button(
                 onClick = onFinishClicked,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF795548)) // Brown color
